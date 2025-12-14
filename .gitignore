@@ -1,0 +1,82 @@
+# ======================
+# Python – bytecode, cache
+# ======================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ======================
+# Virtual environments
+# ======================
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+# ======================
+# Packaging / build
+# ======================
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# ======================
+# Testing / coverage
+# ======================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+
+# ======================
+# Jupyter / IPython
+# ======================
+.ipynb_checkpoints/
+.profile_default/
+.ipython/
+
+# ======================
+# Logs / runtime
+# ======================
+*.log
+*.sqlite3
+
+# ======================
+# VS Code
+# ======================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db
+
+# ======================
+# Secrets / env vars
+# ======================
+.env
+.env.*
+*.pem
+*.key
+
+# ======================
+# Static analysis / type checking
+# ======================
+.mypy_cache/
+.pyre/
+.pytype/
+
+# ======================
+# Documentation builds
+# ======================
+docs/_build/
