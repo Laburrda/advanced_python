@@ -1,51 +1,37 @@
 from bs4 import BeautifulSoup
 import json
+from time import sleep
 from datetime import datetime
-import undetected_chromedriver as uc
-import requests
-import time
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
-class ScrapBrickEconomy:
-    def __init__(self, tabs: list[str]) -> None:
-        options = uc.ChromeOptions()
-        options.headless = False
-        options.add_argument("--disable-blink-features=AutomationControlled")
-        options.add_argument("--no-sandbox")
-        options.add_argument("--disable-gpu")
-        options.add_argument("--disable-dev-shm-usage")
-        options.add_argument("--disable-extensions")
+class Scraper:
+    def __init__(self) -> None:
+        options = Options()
         options.add_argument("--start-maximized")
-        options.add_argument("--disable-popup-blocking")
+        options.add_argument("--disable-blink-features=AutomationControlled")
 
-        self.driver = uc.Chrome(options=options)
+        self.driver = webdriver.Chrome(options=options)
 
-        self.tabs: list[str] = tabs
-        self.session = requests.Session()
-
-        self.headers = {
-            "User-Agent": self.driver.execute_script("return navigator.userAgent")
-        }
-        self.session.headers.update(self.headers)
-
-    def get_soup(self, url: str):
+    def get_soup(self, url: str) -> BeautifulSoup:
         self.driver.get(url)
-        time.sleep(10)
 
-        cookies = {c["name"]: c["value"] for c in self.driver.get_cookies()}
-        self.session.cookies.update(cookies)
+        sleep(5)
 
-        response = self.session.get(url, headers=self.headers)
-        print(f"Status Code: {response.status_code}")
-
-        if response.status_code != 200:
-            return None
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        return soup
+        html = self.driver.page_source
+        return BeautifulSoup(html, "html.parser")
 
     def close(self):
         self.driver.quit()
-    
+
+class ScrapBrickEconomy(Scraper):
+    def __init__(self, tabs: list[str]) -> None:
+        super().__init__()
+        self.tabs: list[str] = tabs
+            
     def modify_info(self, info_ls: list) -> dict:
         data = {}
 
@@ -137,40 +123,32 @@ class ScrapBrickEconomy:
             return data    
     
     def scrap_lego_set(self, lego_set):
-        data = {}
+        left_table = lego_set.find('td', class_='ctlsets-left')
+        if left_table is None:
+            return None  # <-- KLUCZOWE
 
-        if not lego_set:
-            return data
-        
-        def scrap_left_table(lego_set) -> str | list:
-            left_table = lego_set.find('td', class_ = 'ctlsets-left')
-            index = left_table.find('a', href = True)
+        index = left_table.find('a', href=True)
 
-            raw_info_ls = left_table.find_all('div', class_ = 'mb-2')
-            in_info_ls = [info.text for info in raw_info_ls]
-            info_ls = self.modify_info(in_info_ls)
+        raw_info_ls = left_table.find_all('div', class_='mb-2')
+        in_info_ls = [info.text for info in raw_info_ls]
+        info_ls = self.modify_info(in_info_ls)
 
-            raw_stores = left_table.find_all('span', title=True)
-            stores = [store.text for store in raw_stores]
+        raw_stores = left_table.find_all('span', title=True)
+        stores = [store.text for store in raw_stores]
 
-            return index.text, info_ls, stores
-        
-        def scrap_right_table(lego_set):
-            right_table = lego_set.find('td', class_ = 'ctlsets-right text-right')
-            raw_info_ls = right_table.find_all('div')
-            in_info_ls = [info.text for info in raw_info_ls[1:3]]
-            info_ls =  self.modify_prices(in_info_ls)
+        right_table = lego_set.find('td', class_='ctlsets-right text-right')
+        prices = self.modify_prices(
+            [div.text for div in right_table.find_all('div')[1:3]]
+        )
 
-            return info_ls
+        data = {
+            "set_info": info_ls,
+            "stores": stores,
+            "prices": prices,
+        }
 
-        index, data_ls, stores = scrap_left_table(lego_set)
-        prices = scrap_right_table(lego_set)
+        return index.text, data
 
-        data['set_info'] = data_ls
-        data['stores'] = stores
-        data['prices'] = prices
-        
-        return index, data
     
     def get_main_table(self, soup: BeautifulSoup) -> list:
         data = []
@@ -180,13 +158,13 @@ class ScrapBrickEconomy:
 
         main_table = soup.find('table', class_ = 'table table-hover ctlsets-table')
 
-        sets = main_table.find_all('tr')
+        sets = main_table.select("tr:has(td.ctlsets-left)")
 
-        for number, lego_set in enumerate(sets):
-            if number % 2 == 0:
-                index, set_data = self.scrap_lego_set(lego_set)
-                temp_data = {index: set_data}
-                data.append(temp_data)
+        for lego_set in sets:
+            result = self.scrap_lego_set(lego_set)
+
+            index, set_data = result
+            data.append({index: set_data})
 
         return data
     
@@ -199,6 +177,7 @@ class ScrapBrickEconomy:
             url = url + tab
             
             soup = self.get_soup(url)
+            print()
             if not soup:
                 print(f'Failed to scrape subtheme {tab} page.')
                 continue
@@ -221,30 +200,7 @@ class ScrapBrickEconomy:
         with open(file_name, 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=4)
 
-tabs = ['helmet-collection']
 
-tab_ls = ['4-plus', 'ahsoka', 'andor', 'battlefront', 'book-parts', 'boost', 'buildable-figures',
-          'comiccon', 'diorama-collection', 'employee-gift', 'episode-i', 'episode-ii', 'episode-iii',
-          'episode-iv', 'episode-v', 'episode-vi', 'exclusive-minifigs', 'galaxys-edge', 'helmet-collection',
-          'jedi-fallen-order', 'legends', 'master-builder-series', 'mechs', 'microfighters', 'miscellaneous',
-          'original-content', 'planet-set', 'promotional', 'rebels', 'rebuild-the-galaxy', 'resistance', 
-          'rogue-one', 'seasonal', 'skeleton-crew', 'solo', 'starship-collection', 'technic', 'the-bad-batch',
-          'the-book-of-boba-fett', 'the-clone-wars', 'the-force-awakens', 'the-last-jedi', 'the-mandalorian',
-          'the-old-republic', 'the-rise-of-skywalker', 'ultimate-collector-series', 'value-packs', 'young-jedi-adventures']
-
-def main():
-    obj = ScrapBrickEconomy(tab_ls)
-    
-    try:
-        data = obj.scrape()
-        obj.write_json(data)        
-    finally:
-        obj.close()
-
-if __name__ == '__main__':
-    main()
-
-# The total execution time was: 0:08:41.812519
 
 
 
