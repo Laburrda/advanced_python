@@ -4,9 +4,15 @@ from time import sleep
 from datetime import datetime
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+
+class ValidationError(Exception):
+
+    def __init__(self, message) -> None:
+        self.message = message
+        super().__init__()
+
+    def __str__(self):
+        return f"{self.message} (Error Code: {self.error_code})"
 
 class Scraper:
     def __init__(self) -> None:
@@ -31,15 +37,31 @@ class ScrapBrickEconomy(Scraper):
     def __init__(self, tabs: list[str]) -> None:
         super().__init__()
         self.tabs: list[str] = tabs
+
+    def __validate_modify_info(self, info_ls) -> None:
+        if len(info_ls) != 4:
+            raise ValidationError(f'The lenght: {len(info_ls)} differ from expected length.')
             
+        if 'Theme' not in info_ls[0]:
+            raise ValidationError(f'The input list does not contain the "Theme".')
+        
+        if 'Availability' not in info_ls[-1]:
+            raise ValidationError(f'The input list does not contain the "Availability".') 
+
+        if 'Year' not in info_ls[1]:
+            raise ValidationError(f'The input list does not contain the "Year".') 
+
+
     def modify_info(self, info_ls: list) -> dict:
         data = {}
 
+        self.__validate_modify_info(info_ls)
+        
         theme = info_ls[0].split('/')[-1]
         year = info_ls[1].split(' ')[-1]
         availability = info_ls[3].split(' ')[-1]
 
-        data['theme'] = theme
+        data['theme'] = theme.strip()
         data['year'] = int(year)
         data['availability'] = availability
 
@@ -52,7 +74,7 @@ class ScrapBrickEconomy(Scraper):
             data['Pieces'] = int(pieces)
 
             minifigs = temp_ls[5]
-            data['Minifigs'] = minifigs
+            data['Minifigs'] = int(minifigs)
 
             return data
         
@@ -70,7 +92,7 @@ class ScrapBrickEconomy(Scraper):
             return data
 
     def modify_prices(self, prices_ls) -> None:
-        
+
         def _clear_value(string: str) -> float:
             raw_price = string.split(' ')[1]
             price = raw_price[1:]
@@ -125,7 +147,7 @@ class ScrapBrickEconomy(Scraper):
     def scrap_lego_set(self, lego_set):
         left_table = lego_set.find('td', class_='ctlsets-left')
         if left_table is None:
-            return None  # <-- KLUCZOWE
+            return None
 
         index = left_table.find('a', href=True)
 
@@ -177,7 +199,7 @@ class ScrapBrickEconomy(Scraper):
             url = url + tab
             
             soup = self.get_soup(url)
-            print()
+            
             if not soup:
                 print(f'Failed to scrape subtheme {tab} page.')
                 continue
