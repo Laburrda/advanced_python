@@ -129,8 +129,4 @@ with col2:
 
     
     st.pyplot(fig_4)
-
-
-
-    
    

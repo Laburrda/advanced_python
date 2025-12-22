@@ -1,4 +1,5 @@
-from BE_scraper import ScrapBrickEconomy
+from brick_scraper import BrickEconomyScraper
+from utils import save_to_json
 
 tabs = ['4-plus', 'ahsoka', 'andor', 'battlefront', 'book-parts', 'boost', 'buildable-figures',
           'comiccon', 'diorama-collection', 'employee-gift', 'episode-i', 'episode-ii', 'episode-iii',
@@ -9,15 +10,22 @@ tabs = ['4-plus', 'ahsoka', 'andor', 'battlefront', 'book-parts', 'boost', 'buil
           'the-book-of-boba-fett', 'the-clone-wars', 'the-force-awakens', 'the-last-jedi', 'the-mandalorian',
           'the-old-republic', 'the-rise-of-skywalker', 'ultimate-collector-series', 'value-packs', 'young-jedi-adventures']
 
+
 def main():
-    obj = ScrapBrickEconomy(tabs)
-    
+    print("Starting scraper...")
+    scraper = BrickEconomyScraper(tabs)
+
     try:
-        data = obj.scrape()
-        obj.write_json(data)        
+        data = scraper.run()
+        save_to_json(data)
+    except KeyboardInterrupt:
+        print("\nScraping interrupted by user.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
     finally:
-        obj.close()
+        scraper.close()
+        print("Driver closed.")
+
 
 if __name__ == '__main__':
     main()
-
