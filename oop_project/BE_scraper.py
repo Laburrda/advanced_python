@@ -55,6 +55,8 @@ class ScrapBrickEconomy(Scraper):
     def modify_info(self, info_ls: list) -> dict:
         data = {}
 
+        if len(info_ls) > 4:
+            info_ls.pop(-1)
         self.__validate_modify_info(info_ls)
         
         theme = info_ls[0].split('/')[-1]
