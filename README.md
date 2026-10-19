@@ -1,70 +1,62 @@
-# Analiza Rynku LEGO Star Wars & Scraper
+## Project Team
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
-![Selenium](https://img.shields.io/badge/Selenium-Web_Scraping-green)
-![Streamlit](https://img.shields.io/badge/Streamlit-Dashboard-red)
-![AGH](https://img.shields.io/badge/AGH-Advanced_Python-brown)
+The project was delivered by a 4-person team, with the key system modules divided among its members.
 
-To repozytorium zawiera zestaw narzędzi do pobierania (scrapowania), przetwarzania i analizy danych rynkowych zestawów **LEGO Star Wars** z serwisu [BrickEconomy](https://www.brickeconomy.com/). Projekt obejmuje własny scraper (w wersji funkcyjnej oraz obiektowej), pipeline czyszczenia danych oraz interaktywny dashboard w Streamlit.
+**Maciej Laburda – Core Scraping & Logic**
+Role: Built the core data-collection mechanism (functional approach) and the logic that controls the scraping process.
 
-> **Kontekst:** Projekt został zrealizowany w ramach przedmiotu **Zaawansowane Programowanie w Pythonie** na kierunku Informatyka i Ekonometria (Studia Magisterskie) na **AGH w Krakowie**.
+* Key files: `be_scraper_lib.py` (functional approach), `main.py` (control logic)
+* Tasks:
+   * Configured the Selenium environment and browser drivers.
+   * Implemented the `fetch_soup` function for parsing HTML with BeautifulSoup.
+   * Implemented navigation logic across subpages (subthemes) and management of raw-data storage.
 
----
+**Bartosz Sermak – OOP Refactoring & Testing**
+Role: Refactored the code using object-oriented programming, modularized it, and handled testing (QA).
 
-## Zespół Projektowy
+* Key files: `brick_scraper.py`, `base_scraper.py`, `exceptions.py`, `utils.py`, `test_brick_scraper.py`
+* Tasks:
+   * Refactored the monolithic code into a modular, class-based structure (`BrickEconomyScraper` inheriting from `BaseScraper`).
+   * Extracted helper logic (`utils.py`) and error handling (`exceptions.py`).
+   * Implemented validation and input-cleaning methods.
+   * Wrote unit tests in pytest (WebDriver mocking, parsing tests).
 
-Projekt został zrealizowany przez 4-osobowy zespół z podziałem na kluczowe moduły systemu:
+**Jakub Koperdowski – Data Engineering & Cleaning**
+Role: Transformed raw JSON data into an analytical format and cleaned the dataset (ETL).
 
-### Maciej Laburda – Core Scraping & Logic
-**Rola:** Stworzenie podstawowego mechanizmu pobierania danych (podejście funkcyjne) oraz logiki sterującej procesem scrapowania.
-* **Kluczowe pliki:** `be_scraper_lib.py` (podejście funkcyjne), `main.py` (logika sterująca)
-* **Zadania:**
-    * Konfiguracja środowiska **Selenium** i sterowników przeglądarki.
-    * Implementacja funkcji `fetch_soup` do parsowania HTML przez **BeautifulSoup**.
-    * Logika nawigacji po podstronach (subthemes) i zarządzanie zapisem surowych danych.
+* Key files: `create_df.ipynb`, `clean_BE_df.parquet`
+* Tasks:
+   * Implemented the `LoadJson` class for efficient data loading.
+   * Cleaned the data: currency and data-type conversion, handling of missing values and inconsistencies.
+   * Exported to `.parquet` and `.xlsx` formats for analysis.
 
-### Bartosz Sermak – Refaktoryzacja OOP & Testy
-**Rola:** Refactoryzacja kodu poprzez wprowadzenie programowania obiektowego, modularyzację oraz testy (QA).
-* **Kluczowe pliki:** `brick_scraper.py`, `base_scraper.py`, `exceptions.py`, `utils.py`, `test_brick_scraper.py`
-* **Zadania:**
-    * Refaktoryzacja monolitycznego kodu do postaci modułowej i klasowej (`BrickEconomyScraper` dziedziczące po `BaseScraper`).
-    * Wydzielenie logiki pomocniczej (`utils.py`) i obsługi błędów (`exceptions.py`).
-    * Implementacja walidacji i metod czyszczących dane wejściowe.
-    * Przygotowanie testów jednostkowych w **pytest** (mockowanie WebDrivera, testy parsowania).
+**Grzegorz Stańczyk – Data Analysis & Visualization**
+Role: Data presentation layer, exploratory data analysis (EDA), and building the interactive dashboard.
 
-### Jakub Koperdowski – Data Engineering & Cleaning
-**Rola:** Transformacja surowych danych JSON do formatu analitycznego oraz czyszczenie zbioru danych (ETL).
-* **Kluczowe pliki:** `create_df.ipynb`, `clean_BE_df.parquet`
-* **Zadania:**
-    * Implementacja klasy `LoadJson` do efektywnego wczytywania danych.
-    * Czyszczenie danych: konwersja walut, typów danych, obsługa braków i niespójności.
-    * Eksport do formatów `.parquet` i `.xlsx` na potrzeby analizy.
+* Key files: `streamlit_app.py`, `create_charts.ipynb`
+* Tasks:
+   * Built a Streamlit web application with interactive filters (set age, number of pieces, minifigures, price).
+   * Developed visualizations (Seaborn, Matplotlib): market value over time, distribution of minifigure counts, number of releases per year, and availability in stores (Amazon, eBay, etc.).
+   * Carried out a preliminary statistical analysis (EDA): correlations and density plots of variables.
 
-### Grzegorz Stańczyk – Data Analysis & Visualization
-**Rola:** Warstwa prezentacji danych, analiza eksploracyjna (EDA) oraz budowa interaktywnego dashboardu.
-* **Kluczowe pliki:** `streamlit_app.py`, `create_charts.ipynb`
-* **Zadania:**
-    * Stworzenie aplikacji webowej w **Streamlit** z interaktywnymi filtrami (wiek zestawu, liczba elementów, minifigurki, cena).
-    * Opracowanie wizualizacji (**Seaborn**, **Matplotlib**): analiza wartości rynkowej w czasie, rozkład liczby minifigurek, liczebność premier w poszczególnych latach oraz dostępność w sklepach (Amazon, eBay, etc.).
-    * Przeprowadzenie wstępnej analizy statystycznej (EDA) (korelacje, wykresy gęstości zmiennych).
+## File Structure
 
----
+### 1. Data Collection (Scraping – Refactored OOP)
 
-## Struktura Plików
+* `main.py`: Application entry point. Runs the scraping process for the defined categories.
+* `base_scraper.py`: Base class that manages the Selenium WebDriver instance.
+* `brick_scraper.py`: Main business logic for scraping the BrickEconomy website.
+* `utils.py`: Helper functions (e.g., currency parsing, saving to file).
+* `exceptions.py`: Definitions of custom exceptions (e.g., `ValidationError`).
+* `BE_scraper.py`: (Legacy) Original functional implementation.
 
-### 1. Pobieranie Danych (Scraping - Refactored OOP)
-* **`main.py`**: Punkt startowy aplikacji. Uruchamia proces scrapowania dla zdefiniowanych kategorii.
-* **`base_scraper.py`**: Klasa bazowa obsługująca instancję Selenium WebDriver.
-* **`brick_scraper.py`**: Główna logika biznesowa scrapowania serwisu BrickEconomy.
-* **`utils.py`**: Funkcje pomocnicze (np. parsowanie walut, zapis do pliku).
-* **`exceptions.py`**: Definicje własnych wyjątków (np. `ValidationError`).
-* **`BE_scraper.py`**: (Legacy) Pierwotna implementacja funkcyjna.
+### 2. Data Processing
 
-### 2. Przetwarzanie Danych
-* **`create_df.ipynb`**: Notebook Jupyter do czyszczenia danych i konwersji JSON -> Parquet/Excel.
-* **`clean_BE_df.parquet` / `clean_BE_df.xlsx`**: Gotowe zbiory danych.
-* **`scraped_brickeconomy_final.json`**: Przykładowy zrzut surowych danych.
+* `create_df.ipynb`: Jupyter notebook for data cleaning and JSON -> Parquet/Excel conversion.
+* `clean_BE_df.parquet` / `clean_BE_df.xlsx`: Ready-to-use datasets.
+* `scraped_brickeconomy_final.json`: Sample dump of raw data.
 
-### 3. Analiza i Aplikacja
-* **`streamlit_app.py`**: Kod źródłowy dashboardu analitycznego.
-* **`create_charts.ipynb`**: Notebook z analizą eksploracyjną (EDA).
+### 3. Analysis and Application
+
+* `streamlit_app.py`: Source code of the analytical dashboard.
+* `create_charts.ipynb`: Notebook with the exploratory data analysis (EDA).
